@@ -56,8 +56,6 @@ ion-button {
 
 .cause {
   margin: 0.5rem 0 0;
-  /* Причина и параметры файла разделены переводом строки. */
-  white-space: pre-line;
   color: var(--ion-color-medium);
   font-family: monospace;
   font-size: 0.8rem;

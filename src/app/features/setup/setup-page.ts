@@ -19,43 +19,6 @@ function describe(cause: unknown): string {
   return String(cause);
 }
 
-/**
- * Параметры файла рядом с ошибкой. iCloud отдаёт выбранный файл не всегда
- * целиком, и нулевой размер отличает это от настоящей поломки разбора.
- */
-function describeFile(file: File): string {
-  const kb = Math.round(file.size / 1024);
-  return `${file.name} · ${file.type || 'без типа'} · ${kb} КБ`;
-}
-
-/** Первые кадры стека: имя чанка отличает падение pdf.js от нашего кода. */
-function stackOf(cause: unknown): string {
-  if (!(cause instanceof Error) || !cause.stack) return '';
-  return cause.stack.split('\n').slice(0, 4).join('\n');
-}
-
-/**
- * Стартует ли воркер pdf.js в этом браузере. Ошибка загрузки приходит
- * событием, а не исключением, поэтому короткая тишина считается успехом.
- */
-async function probeWorker(): Promise<string> {
-  const url = new URL('pdf.worker.min.mjs', document.baseURI).toString();
-  try {
-    const worker = new Worker(url, { type: 'module' });
-    const outcome = await new Promise<string>((resolve) => {
-      const quiet = setTimeout(() => resolve('стартовал'), 1500);
-      worker.addEventListener('error', (event) => {
-        clearTimeout(quiet);
-        resolve(event.message || 'не загрузился');
-      });
-    });
-    worker.terminate();
-    return `worker: ${outcome}`;
-  } catch (cause) {
-    return `worker: ${describe(cause)}`;
-  }
-}
-
 @Component({
   selector: 'app-setup-page',
   imports: [
@@ -124,10 +87,7 @@ async function probeWorker(): Promise<string> {
           <p class="error" role="alert">{{ message }}</p>
         }
 
-        <!--
-          Техническая причина рядом с человеческим текстом: без неё отладка на
-          телефоне невозможна — консоли под рукой нет, а ошибка у каждого своя.
-        -->
+        <!-- Причина мелким шрифтом: на телефоне консоли нет, а текст можно переслать. -->
         @if (cause(); as detail) {
           <p class="cause">{{ detail }}</p>
         }
@@ -193,11 +153,7 @@ export class SetupPage {
         this.error.set(cause.message);
       } else {
         this.error.set('Не удалось прочитать файл. Убедись, что это PDF из личного кабинета.');
-        this.cause.set(
-          [describe(cause), describeFile(file), stackOf(cause), await probeWorker()]
-            .filter(Boolean)
-            .join('\n'),
-        );
+        this.cause.set(describe(cause));
       }
     } finally {
       this.busy.set(false);
