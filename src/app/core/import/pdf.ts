@@ -13,6 +13,37 @@ import type { Page } from './woordenlijst';
 // node_modules, а без воркера pdf.js падает на первом же документе.
 GlobalWorkerOptions.workerSrc = new URL('pdf.worker.min.mjs', document.baseURI).toString();
 
+/**
+ * WebKit не даёт итерировать ReadableStream через for await, а pdf.js именно
+ * так собирает текст страницы (getTextContent). Без этого импорт падал на
+ * первой же странице: «a[Symbol.iterator] is not a function» — хелпер
+ * for await не находит ни asyncIterator, ни iterator. В Chrome поддержка
+ * есть, поэтому на десктопе проблема не воспроизводилась.
+ */
+function polyfillStreamIteration(): void {
+  const proto = ReadableStream.prototype as ReadableStream<unknown> & {
+    [Symbol.asyncIterator]?: () => AsyncIterableIterator<unknown>;
+  };
+  if (proto[Symbol.asyncIterator]) return;
+
+  proto[Symbol.asyncIterator] = function (this: ReadableStream<unknown>) {
+    const reader = this.getReader();
+    const iterator: AsyncIterableIterator<unknown> = {
+      next: () => reader.read() as Promise<IteratorResult<unknown>>,
+      async return(value?: unknown) {
+        await reader.cancel();
+        return { done: true, value } as IteratorResult<unknown>;
+      },
+      [Symbol.asyncIterator]() {
+        return iterator;
+      },
+    };
+    return iterator;
+  };
+}
+
+polyfillStreamIteration();
+
 export interface ReadProgress {
   page: number;
   total: number;
