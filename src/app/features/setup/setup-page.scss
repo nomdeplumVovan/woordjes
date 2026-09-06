@@ -53,3 +53,12 @@ ion-button {
   --text-transform: none;
   text-transform: none;
 }
+
+.cause {
+  margin: 0.5rem 0 0;
+  color: var(--ion-color-medium);
+  font-family: monospace;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}

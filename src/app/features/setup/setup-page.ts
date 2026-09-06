@@ -13,6 +13,12 @@ import {
 } from '@ionic/angular';
 import { Library, WrongFileError, type ImportResult } from '../../core/library';
 
+/** Ошибки pdf.js приходят и не-Error значениями, поэтому приводим руками. */
+function describe(cause: unknown): string {
+  if (cause instanceof Error) return `${cause.name}: ${cause.message}`;
+  return String(cause);
+}
+
 @Component({
   selector: 'app-setup-page',
   imports: [
@@ -81,6 +87,14 @@ import { Library, WrongFileError, type ImportResult } from '../../core/library';
           <p class="error" role="alert">{{ message }}</p>
         }
 
+        <!--
+          Техническая причина рядом с человеческим текстом: без неё отладка на
+          телефоне невозможна — консоли под рукой нет, а ошибка у каждого своя.
+        -->
+        @if (cause(); as detail) {
+          <p class="cause">{{ detail }}</p>
+        }
+
         @if (result(); as done) {
           <div class="done" role="status">
             @if (done.kind === 'woordenlijst') {
@@ -113,6 +127,8 @@ export class SetupPage {
   protected readonly page = signal(0);
   protected readonly total = signal(0);
   protected readonly error = signal<string | null>(null);
+  /** Текст исключения: показываем мелким шрифтом под сообщением. */
+  protected readonly cause = signal<string | null>(null);
   protected readonly result = signal<ImportResult | null>(null);
 
   protected readonly progress = signal(0);
@@ -125,6 +141,7 @@ export class SetupPage {
 
     this.busy.set(true);
     this.error.set(null);
+    this.cause.set(null);
     this.result.set(null);
 
     try {
@@ -135,11 +152,12 @@ export class SetupPage {
       });
       this.result.set(done);
     } catch (cause) {
-      this.error.set(
-        cause instanceof WrongFileError
-          ? cause.message
-          : 'Не удалось прочитать файл. Убедись, что это PDF из личного кабинета.',
-      );
+      if (cause instanceof WrongFileError) {
+        this.error.set(cause.message);
+      } else {
+        this.error.set('Не удалось прочитать файл. Убедись, что это PDF из личного кабинета.');
+        this.cause.set(describe(cause));
+      }
     } finally {
       this.busy.set(false);
       // Позволяем выбрать тот же файл повторно после ошибки.
