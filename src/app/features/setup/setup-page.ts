@@ -12,6 +12,7 @@ import {
   IonToolbar,
 } from '@ionic/angular';
 import { Library, WrongFileError, type ImportResult } from '../../core/library';
+import { Speech } from '../../core/speech';
 
 /** Ошибки pdf.js приходят и не-Error значениями, поэтому приводим руками. */
 function describe(cause: unknown): string {
@@ -112,12 +113,35 @@ function describe(cause: unknown): string {
         @if (hasData()) {
           <ion-button expand="block" fill="outline" routerLink="/chapters">К параграфам</ion-button>
         }
+
+        <!--
+          Статус голоса виден заранее: иначе отсутствие кнопки «прослушать»
+          в тренировке выглядело бы поломкой приложения.
+        -->
+        <h2 class="section">Uitspraak</h2>
+        @if (speech.available()) {
+          <p class="intro">
+            Нидерландский голос найден — в разборе ответа появится кнопка «прослушать».
+          </p>
+          <ion-button fill="outline" expand="block" (click)="speech.speak('Goedemorgen')">
+            Проверить голос
+          </ion-button>
+        } @else {
+          <p class="intro">
+            Нидерландского голоса в системе нет, поэтому произношение выключено: прочитать
+            <strong>huis</strong> английским голосом хуже, чем промолчать. На iPhone голос
+            ставится в Настройки → Универсальный доступ → Устный контент → Голоса → Nederlands,
+            на Windows — языковым пакетом в параметрах речи. После установки перезапустите
+            приложение.
+          </p>
+        }
       </div>
     </ion-content>
   `,
 })
 export class SetupPage {
   private readonly library = inject(Library);
+  protected readonly speech = inject(Speech);
   private readonly router = inject(Router);
 
   protected readonly busy = signal(false);

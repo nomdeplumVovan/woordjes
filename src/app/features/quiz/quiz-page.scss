@@ -65,6 +65,15 @@ ion-button {
   font-weight: 600;
 }
 
+.review__listen {
+  --color: var(--ion-color-primary);
+  --padding-start: 0.35rem;
+  --padding-end: 0.35rem;
+  height: 1.6rem;
+  margin: 0 0 0 0.15rem;
+  vertical-align: middle;
+}
+
 .review__meta,
 .review__example {
   margin: 0.35rem 0 0;

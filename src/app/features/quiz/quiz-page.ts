@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { informationCircleOutline } from 'ionicons/icons';
+import { informationCircleOutline, volumeHighOutline } from 'ionicons/icons';
 import {
   IonBackButton,
   IonButton,
@@ -16,6 +16,7 @@ import {
   IonToolbar,
 } from '@ionic/angular';
 import { Quiz, type Direction, type Question } from '../../core/quiz';
+import { Speech } from '../../core/speech';
 import { Srs } from '../../core/srs';
 import {
   AUXILIARY_BOTH,
@@ -130,7 +131,22 @@ const VERDICTS = {
                 <span class="review__verdict-nl">{{ verdictLabel(question).nl }}</span>
                 <span class="review__verdict-ru">{{ verdictLabel(question).ru }}</span>
               </p>
-              <p class="review__word">{{ full(question) }} — {{ question.word.ru }}</p>
+              <p class="review__word">
+                {{ full(question) }} — {{ question.word.ru }}
+                <!-- Кнопки нет, когда нидерландского голоса в системе нет: молчание
+                     честнее, чем слово, прочитанное чужим языком. -->
+                @if (speech.available()) {
+                  <ion-button
+                    class="review__listen"
+                    fill="clear"
+                    size="small"
+                    [attr.aria-label]="'Произнести: ' + spoken(question)"
+                    (click)="pronounce(question)"
+                  >
+                    <ion-icon slot="icon-only" name="volume-high-outline" />
+                  </ion-button>
+                }
+              </p>
               @if (meta(question); as line) {
                 <p class="review__meta">{{ line }}</p>
               }
@@ -219,6 +235,8 @@ export class QuizPage {
   private readonly route = inject(ActivatedRoute);
   private readonly quiz = inject(Quiz);
   private readonly srs = inject(Srs);
+  // Шаблон спрашивает available(), поэтому сервис доступен ему напрямую.
+  protected readonly speech = inject(Speech);
 
   /** Пусто — значит режим не привязан к параграфу. */
   private readonly chapterId = this.route.snapshot.paramMap.get('chapterId') ?? '';
@@ -289,6 +307,20 @@ export class QuizPage {
     return this.chosen() === question.correctIndex ? VERDICTS.right : VERDICTS.wrong;
   }
 
+  /**
+   * Что отправляем синтезатору. Не то же, что на экране: множественное число
+   * из режима артиклей читать вслух незачем, а артикль — наоборот, часть
+   * звучания слова.
+   */
+  protected spoken(question: Question): string {
+    const word = question.word;
+    return word.article ? `${word.article} ${word.nl}` : word.nl;
+  }
+
+  protected pronounce(question: Question): void {
+    this.speech.speak(this.spoken(question));
+  }
+
   /** Слово в том виде, в каком его стоит запомнить: существительное — с артиклем. */
   protected full(question: Question): string {
     const word = question.word;
@@ -329,7 +361,7 @@ export class QuizPage {
   }
 
   constructor() {
-    addIcons({ informationCircleOutline });
+    addIcons({ informationCircleOutline, volumeHighOutline });
     void this.load();
   }
 
