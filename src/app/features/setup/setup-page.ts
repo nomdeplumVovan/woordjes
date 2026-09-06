@@ -121,19 +121,36 @@ function describe(cause: unknown): string {
         <h2 class="section">Uitspraak</h2>
         @if (speech.available()) {
           <p class="intro">
-            Нидерландский голос найден — в разборе ответа появится кнопка «прослушать».
+            Голос найден: <strong>{{ speech.voiceName() }}</strong>. В разборе ответа есть кнопка
+            «прослушать».
           </p>
-          <ion-button fill="outline" expand="block" (click)="speech.speak('Goedemorgen')">
-            Проверить голос
-          </ion-button>
         } @else {
           <p class="intro">
             Нидерландского голоса в системе нет, поэтому произношение выключено: прочитать
-            <strong>huis</strong> английским голосом хуже, чем промолчать. На iPhone голос
-            ставится в Настройки → Универсальный доступ → Устный контент → Голоса → Nederlands,
-            на Windows — языковым пакетом в параметрах речи. После установки перезапустите
-            приложение.
+            <strong>huis</strong> английским голосом хуже, чем промолчать.
           </p>
+          <p class="intro">
+            На iPhone голос добавляется в Настройки → Универсальный доступ → Устный контент →
+            Голоса → Nederlands. Если после установки кнопка не появилась, добавьте Nederlands
+            ещё и в Настройки → Основные → Язык и регион → Предпочитаемые языки: Safari берёт
+            голоса оттуда. На Windows — языковым пакетом в параметрах речи.
+          </p>
+          @if (speech.languages(); as langs) {
+            <p class="cause">
+              @if (langs.length) {
+                Синтезатор предлагает: {{ langs.join(', ') }}
+              } @else {
+                Синтезатор не вернул ни одного голоса.
+              }
+            </p>
+          }
+        }
+
+        <ion-button fill="outline" expand="block" [disabled]="busy()" (click)="checkVoice()">
+          Проверить голос
+        </ion-button>
+        @if (voiceCheck(); as verdict) {
+          <p class="cause" role="status">{{ verdict }}</p>
         }
       </div>
     </ion-content>
@@ -151,6 +168,7 @@ export class SetupPage {
   /** Текст исключения: показываем мелким шрифтом под сообщением. */
   protected readonly cause = signal<string | null>(null);
   protected readonly result = signal<ImportResult | null>(null);
+  protected readonly voiceCheck = signal<string | null>(null);
 
   protected readonly progress = signal(0);
   protected readonly hasData = this.library.chapterCount;
@@ -184,5 +202,11 @@ export class SetupPage {
       // Позволяем выбрать тот же файл повторно после ошибки.
       input.value = '';
     }
+  }
+
+  /** Произносит пробное слово: молчание синтезатора надо уметь отличить от отказа. */
+  protected async checkVoice(): Promise<void> {
+    this.voiceCheck.set('Проверяю…');
+    this.voiceCheck.set(await this.speech.test());
   }
 }

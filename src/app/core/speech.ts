@@ -2,8 +2,11 @@ import { Service, signal } from '@angular/core';
 
 /** Нидерландский, а не фламандский: учебник издан в Нидерландах. */
 const PREFERRED = 'nl-NL';
-/** Чуть медленнее обычного: на учебной скорости слышны окончания. */
-const RATE = 0.9;
+/**
+ * Заметно медленнее обычного. Системные голоса читают в темпе носителя, а на
+ * A2 важно расслышать окончания — они несут падеж, число и время.
+ */
+const RATE = 0.8;
 
 /**
  * Голос для нидерландского. Локальный предпочтительнее сетевого — приложение
@@ -42,6 +45,14 @@ export class Speech {
 
   /** Установлен ли в системе нидерландский голос. */
   readonly available = signal(false);
+  /** Имя выбранного голоса — видно на экране настройки. */
+  readonly voiceName = signal('');
+  /**
+   * Какие языки синтезатор вообще предлагает. Пустой список означает не
+   * «нет нидерландского», а «список ещё не пришёл» — на iOS это разные
+   * поводы для разных советов.
+   */
+  readonly languages = signal<string[]>([]);
 
   constructor() {
     // Синтезатора может не быть вовсе — в тестовом окружении, например.
@@ -57,7 +68,9 @@ export class Speech {
     if (!voice) return;
 
     // Иначе нажатия копили бы очередь: дослушивать прошлые слова незачем.
-    speechSynthesis.cancel();
+    // Но только когда есть что отменять: на iOS холостой cancel() умеет
+    // подвесить синтезатор, и следующий speak() уже не звучит.
+    if (speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.voice = voice;
@@ -66,8 +79,43 @@ export class Speech {
     speechSynthesis.speak(utterance);
   }
 
+  /**
+   * Произносит пробное слово и рассказывает, чем это кончилось. Нужно, потому
+   * что молчание синтезатора многозначно: голос может быть в списке, но не
+   * скачан, а на iOS звук глушит ещё и боковой переключатель.
+   */
+  async test(): Promise<string> {
+    const voice = this.voice;
+    if (!voice) return 'Голос не найден.';
+
+    return new Promise<string>((resolve) => {
+      const utterance = new SpeechSynthesisUtterance('Goedemorgen');
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+      utterance.rate = RATE;
+
+      const silent = setTimeout(
+        () => resolve('Синтезатор не отозвался. Проверьте беззвучный режим и громкость.'),
+        3000,
+      );
+      utterance.onstart = () => {
+        clearTimeout(silent);
+        resolve(`Звучит: ${voice.name} (${voice.lang}).`);
+      };
+      utterance.onerror = (event) => {
+        clearTimeout(silent);
+        resolve(`Синтезатор вернул ошибку: ${event.error}.`);
+      };
+
+      speechSynthesis.speak(utterance);
+    });
+  }
+
   private refresh(): void {
-    this.voice = pickDutch(speechSynthesis.getVoices());
+    const voices = speechSynthesis.getVoices();
+    this.voice = pickDutch(voices);
     this.available.set(this.voice !== null);
+    this.voiceName.set(this.voice ? `${this.voice.name} (${this.voice.lang})` : '');
+    this.languages.set([...new Set(voices.map((voice) => voice.lang))].sort());
   }
 }
