@@ -1,0 +1,14 @@
+<ion-app>
+  <ion-router-outlet></ion-router-outlet>
+
+  <!--
+    Полоска обновления вместо автоматической перезагрузки: перезагружать
+    приложение под руками у человека посреди сессии нельзя.
+  -->
+  @if (updateReady()) {
+    <div class="update" role="status">
+      <span>Есть новая версия</span>
+      <ion-button size="small" fill="clear" (click)="apply()">Обновить</ion-button>
+    </div>
+  }
+</ion-app>

@@ -1,0 +1,34 @@
+/* Экран читается и на телефоне, и на широком мониторе. */
+.layout {
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.today__line {
+  margin: 0 0 1rem;
+  color: var(--ion-color-medium-shade);
+}
+
+.today__line strong {
+  color: var(--ion-color-dark);
+  font-size: 1.1rem;
+}
+
+ion-item-divider {
+  --background: var(--ion-color-light);
+  --color: var(--ion-color-medium-shade);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.today__subtitle {
+  margin: 0.15rem 0 0;
+  color: var(--ion-color-medium);
+  font-size: 0.8rem;
+}
+
+ion-button {
+  --text-transform: none;
+  text-transform: none;
+}

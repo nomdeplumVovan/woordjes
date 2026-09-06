@@ -1,0 +1,248 @@
+You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
+
+## TypeScript Best Practices
+
+- Use strict type checking
+- Prefer type inference when the type is obvious
+- Avoid the `any` type; use `unknown` when type is uncertain
+
+## Angular Best Practices
+
+- Always use standalone components over NgModules
+- Must NOT set `standalone: true` inside Angular decorators. It's the default in Angular v20+.
+- Do NOT set `changeDetection: ChangeDetectionStrategy.OnPush` explicitly. `OnPush` is the default in Angular v22+.
+- Use signals for state management
+- Implement lazy loading for feature routes
+- Do NOT use the `@HostBinding` and `@HostListener` decorators. Put host bindings inside the `host` object of the `@Component` or `@Directive` decorator instead
+- Use `NgOptimizedImage` for all static images.
+  - `NgOptimizedImage` does not work for inline base64 images.
+
+## Accessibility Requirements
+
+- It MUST pass all AXE checks.
+- It MUST follow all WCAG AA minimums, including focus management, color contrast, and ARIA attributes.
+
+### Components
+
+- Keep components small and focused on a single responsibility
+- Use `input()` and `output()` functions instead of decorators
+- Use `model()` for two-way bound properties with `[(prop)]` syntax instead of pairing `input()` with `output()`
+- Use `computed()` for derived state
+- Use `linkedSignal()` for state derived from multiple reactive sources that must stay synchronized
+- Prefer inline templates for small components
+- Prefer Signal Forms (`@angular/forms/signals`) for new forms. They are stable in Angular v22+ and provide signal-based state, type-safe field access, and schema-based validation
+- When not using Signal Forms, prefer Reactive forms instead of Template-driven ones
+- Do NOT use `ngClass`, use `class` bindings instead
+- Do NOT use `ngStyle`, use `style` bindings instead
+- When using external templates/styles, use paths relative to the component TS file.
+
+## State Management
+
+- Use signals for local component state
+- Use `computed()` for derived state
+- Keep state transformations pure and predictable
+- Do NOT use `mutate` on signals, use `update` or `set` instead
+
+## Templates
+
+- Keep templates simple and avoid complex logic
+- Use native control flow (`@if`, `@for`, `@switch`) instead of `*ngIf`, `*ngFor`, `*ngSwitch`
+- Use the async pipe to handle observables
+- Do not assume globals like (`new Date()`) are available.
+
+## Services
+
+- Design services around a single responsibility
+- Use the `providedIn: 'root'` option for singleton services
+- Prefer the `@Service` decorator over `@Injectable({providedIn: 'root'})` for new singleton services (Angular v22+)
+- Use the `inject()` function instead of constructor injection
+
+## Проект woordjes
+
+Приложение для заучивания нидерландских слов по учебнику **TaalCompleet A2** (KleurRijker,
+11e druk 2025). Работает офлайн, без бэкенда.
+
+### Структура учебника
+
+Восемь тем (`thema`), в каждой ~15 параграфов: 1.1, 1.2, … Один параграф = ~14 «синих слов»,
+всего за A1+A2 около 2000. Официальные переводные словники лежат в личном кабинете
+leren.kleurrijker.nl — оттуда их и берёт пользователь.
+
+Темы A2:
+
+| # | thema | перевод |
+|---|---|---|
+| 1 | Verhuizen | Переезд |
+| 2 | Nederland | Нидерланды |
+| 3 | Kinderen | Дети |
+| 4 | Winkels | Магазины |
+| 5 | Opleidingen | Образование |
+| 6 | Werk zoeken | Поиск работы |
+| 7 | Werken | Работа |
+| 8 | De gemeente | Муниципалитет |
+
+### Данные приносит пользователь
+
+Приложение **не поставляется со словарём**. Каждый импортирует свой PDF из личного кабинета
+leren.kleurrijker.nl (TaalCompleet A2 → EXTRA): `Woordenlijst Russisch` и, отдельно,
+`Onregelmatige werkwoorden`. Разбор идёт в браузере, файл никуда не отправляется.
+
+Так решается вопрос авторских прав: лицензия издателя выдаётся на одного человека, поэтому
+раздавать копию словника нельзя даже тем, у кого лицензия есть. Каждый использует свою.
+Побочный плюс — приложение не привязано к A2 и переживёт смену учебника.
+
+```
+PDF пользователя ──> core/import/pdf.ts     чтение через pdfjs, определение типа файла
+                 ──> core/import/rows.ts    страница -> записи
+                 ──> core/import/woordenlijst.ts | verb-list.ts
+                 ──> core/library.ts        сборка Word/Chapter + ручной слой -> IndexedDB
+```
+
+- Тип файла определяется **по содержимому**, а не по имени: люди переименовывают загрузки,
+  а перепутанный файл дал бы пустой импорт без объяснения.
+- `public/overrides.json` — ручной слой (примеры, ударения, уточнённые части речи). Это
+  собственный контент, а не материал издателя, поэтому он поставляется с приложением.
+  Ключ — `<параграф>:<nl>` или `<параграф>` для самой главы.
+- Справочник глаголов и словник загружаются в любом порядке: при импорте глаголов уже
+  сохранённые слова дополняются отделяемыми приставками и тегом `onregelmatig`.
+- `pdfjs` грузится динамическим импортом — он весит больше самого приложения, а нужен только
+  в момент импорта. Воркер копируется в корень сборки через `assets` в `angular.json`:
+  Angular не резолвит `new URL()` для файлов из node_modules, и без этого разбор падает.
+- `core/import/woordenlijst.spec.ts` прогоняет парсер на настоящем файле из `tools/source/`.
+  Файл лицензионный и в репозитории не лежит, поэтому тест пропускается, если его нет.
+
+### Архитектура
+
+- Источник истины для лексики — IndexedDB: словарь попадает туда только импортом. С приложением
+  поставляется единственный словарный файл — `public/overrides.json`, и это собственный контент.
+- `src/app/core/models.ts` — типы. В `Word.nl` слово хранится **без артикля**, артикль отдельным
+  полем `article`, чтобы работал режим тренировки `de`/`het`.
+- `Word.stress` — слоги и номер ударного: под упражнения «Waar ligt de klemtoon?» и для TTS.
+- `VerbForms.auxiliary` — `hebben`/`zijn` для перфекта, отдельная тема нидерландского.
+  `VerbForms.separable` — отделяемая приставка (`opbellen` → `op`), меняет порядок слов.
+- `src/app/core/db.ts` — Dexie (IndexedDB). Таблицы `words`, `chapters`, `progress`, `meta`,
+  `verbs`. Справочник глаголов вынесен в отдельную таблицу (версия 4): его импортируют отдельным
+  файлом и в любом порядке относительно словника.
+- `src/app/core/library.ts` — импорт PDF в базу и `chapterCount`, на который смотрят экраны.
+- Все роуты, кроме `/setup`, закрыты гардом `requireLibrary`: без словаря учить нечего, и вместо
+  пустого списка параграфов человек попадает на импорт.
+
+### Правила
+
+- Прогресс (`Progress`) привязан к `wordId` и **никогда не перезаписывается** при переимпорте:
+  `library.ts` чистит `words` и `chapters`, но не `progress`.
+- `id` слова — `${chapterId}:${slug(nl)}`, например `1.1:buren`. Переименование слова обнуляет прогресс.
+- `order` параграфа — `тема * 100 + номер`: 1.1 → 101, 1.15 → 115. Строковая сортировка ставила бы
+  1.10 перед 1.2.
+- Ionic требует zone.js: не переводить проект в zoneless-режим.
+- Dev-сервер запускать на порту 4300 — 4200 занят проектом Design Canvas.
+- Бюджет initial-бандла поднят до 1MB/2MB: дефолтные 500 kB не рассчитаны на Ionic.
+- **Коммиты делает только человек, после просмотра диффа.** Claude не запускает `git commit`
+  ни при каких условиях — правило продублировано запретом в `.claude/settings.json`. Остальные
+  git-операции (status, diff, log, add, branch, remote, fetch, pull, push, stash) разрешены
+  без спроса. Подготовив изменения, оставляй их в рабочем дереве и говори, что готово к коммиту.
+- **Соавторство инструментов в сообщениях коммитов не указывается.** Никаких трейлеров
+  `Co-Authored-By: Claude`, строк `Generated with Claude Code` и подобных отметок — ни в коммитах,
+  ни в описаниях PR. Автор один, и история должна читаться как его собственная.
+- Лексика учебника защищена авторским правом, поэтому в репозитории её нет и быть не должно:
+  словник живёт только в браузере того, кто его импортировал. `public/data/` и `tools/source/`
+  закрыты в `.gitignore` — не коммить их даже временно: из истории такое убирается только
+  переписыванием.
+
+### Тренировка
+
+- `src/app/core/srs.ts` — коробки Лейтнера. Верный ответ поднимает слово на коробку выше
+  (интервалы 1, 2, 4, 8, 16 дней), ошибка роняет в первую, а не обнуляет: счётчики `correct`
+  и `wrong` копятся для статистики. `isLearnable()` отсекает слова с тегом `niet leren`.
+- `src/app/core/quiz.ts` — сборка вопросов. Направление чередуется случайно: `nl-ru` (узнать)
+  и `ru-nl` (вспомнить) — без обратного направления слова остаются пассивными.
+- Отвлекающие варианты подбираются каскадом: та же часть речи и тот же параграф → та же тема →
+  та же часть речи → любые. Случайные слова из другой темы сделали бы выбор очевидным, и
+  тренировалось бы умение исключать нелепое, а не словарь. На текущих данных 69% вопросов
+  укладываются в первый уровень каскада.
+- Режим форм глаголов (`Quiz.forVerbs`, роут `/verbs`) спрашивает прошедшее время или перфект
+  целиком («zijn gegaan»): выбор `hebben`/`zijn` в отрыве от причастия разбирать бессмысленно.
+  Главный неверный вариант — форма, **образованная по правилу** (`gaan` → `gade` вместо `ging`):
+  это ровно та ошибка, которую делают вместо того, чтобы вспомнить исключение.
+- Полное правило (`AUXILIARY_RULES`, `AUXILIARY_BOTH`) открывается кнопкой «i» рядом с подсказкой:
+  в разборе — короткая причина для этого глагола, в модалке — все три случая с примерами глаголов.
+  Разбор не должен превращаться в справочник, но справочник должен быть в одном касании.
+- `core/auxiliary.ts` объясняет выбор `hebben`/`zijn` в разборе: перемещение из точки в точку
+  (`gaan`, `weggaan`), переход в новое состояние (`worden`, `beginnen`), состояние вместо действия
+  (`zijn`, `blijven`). Для глаголов с обоими вариантами показывается пара примеров — она нагляднее
+  формулировки: «Ik heb het glas gebroken · Het glas is gebroken». Про `hebben` подсказки нет:
+  он стоит у большинства глаголов и объяснения не требует. Все 22 zijn-глагола словника покрыты
+  правилом, но на неизвестный глагол возвращается честное «это исключение», а не пустота.
+- Неверные варианты в режиме глаголов строятся из **реальных ошибок**, а не из случайных чужих
+  форм: образование по правилу (`gaan` → `gade`), неотделённая приставка (`doorging` вместо
+  `ging door`) и перепутанный вспомогательный (`hebben gegaan` вместо `zijn gegaan`).
+  Формы других глаголов идут только добивкой, если ловушек не хватило.
+- `core/verbs.ts` — правила регулярного спряжения. Служат дважды: строят правдоподобно неверный
+  вариант и отделяют настоящее исключение от предсказуемого глагола. Тонкости, каждая из которых
+  всплыла на реальных данных: звонкость считается **до** оглушения на письме (`leven` → `leefde`,
+  не `leefte`); удвоение гласной только в односложной основе (`won` → `woon`, но `regel` остаётся);
+  перед `w`/`j` удвоения нет (`duwde`); безударные приставки `be-`, `ver-`, `ont-`, `her-` не дают
+  `ge-` в причастии (`ontmoet`); основа на `-t` не удваивает согласную в причастии (`gezet`),
+  хотя в прошедшем удваивает (`praatte`).
+- Эвристика применяется только к односоставным глаголам с односложной основой. `studeren` →
+  `studeerde`, а `leveren` → `leverde` — по написанию не различить, поэтому такие глаголы отдаются
+  справочнику. Ошибка здесь означала бы гонять предсказуемый глагол как исключение.
+- **Прогресс разделён по навыкам** (`Progress.skill`: `translation` | `article`), ключ составной
+  `[wordId+skill]`. Знать перевод «buren» и помнить, что это «de buren», — разные умения,
+  забываются они врозь. С общей записью угаданный перевод уводил бы слово в дальнюю коробку,
+  хотя артикль ни разу не спрашивали. Версия базы 3 переносит старые записи в `translation`.
+- Режим `de`/`het` (`Quiz.forArticles`, роут `/articles`) спрашивает слово **без артикля** —
+  иначе ответ содержался бы в вопросе. Вариантов два, порядок постоянный (de слева): перемешивать
+  нечего, а стабильное место ускоряет ответ. В разборе показывается и множественное число —
+  у het-слов оно часто и есть зацепка для памяти.
+- Сессия на сегодня (`Quiz.forToday`) сначала берёт слова с подошедшим сроком, затем добирает
+  новые **по порядку параграфов** — так учебник проходится последовательно, а не вразнобой.
+  Слово с ненаступившим сроком не показывается, даже если новых уже не осталось: иначе
+  интервальное повторение теряет смысл.
+- `Quiz.counts()` даёт числа для главного экрана: сколько ждёт повторения, сколько не начинали,
+  сколько выучено (коробка 4 и выше).
+- Экран `quiz-page` обслуживает оба роута: `/quiz/:chapterId` — тренировка параграфа,
+  `/review` — повторение по срокам. Отличаются только источником слов.
+- Подписи интерфейса двуязычные: нидерландский крупно, русский подсказкой мелким
+  (`Wat betekent dit?` / «Как переводится?», `Goed!` / «Верно», `Fout` / «Неверно»).
+  Кнопка — `Volgende`, на последнем вопросе `Resultaat`. Эти фразы попадаются десятки раз
+  за сессию, и это самый дешёвый способ их усвоить. `goed`/`fout` — стандартная пара
+  «правильно/неправильно» в нидерландских заданиях; `volgende`, а не `volgend`: краткая форма
+  требует существительного (`volgend jaar`).
+- Отвлекающий вариант не должен делить значимое слово с правильным ответом: «общий, всего»
+  рядом с «всего лишь» читается как второй верный. Служебные слова (`что`, `как`, …) не в счёт.
+  Если из-за фильтра вариантов не хватает, он снимается: показать три варианта хуже, чем похожий.
+- Переводы словника местами дают лишь одно значение слова. Где это расходится с текстом параграфа,
+  перевод уточняется в `overrides.json` — например `pas` в 1.1 это «всего лишь»
+  (противопоставление `al` / `pas`), а не только «только что».
+- **Темпом управляет человек, а не таймер.** Автоперехода после ответа нет: разбор
+  (слово с артиклем, множественное число, формы глагола, ударение, пример) висит, пока не нажмут
+  «Дальше». Момент ответа — единственный, когда грамматику действительно читают, и торопить там
+  нечего. Клавиши: 1..4 — выбор варианта, Enter или пробел — дальше.
+- После ответа подсвечивается и выбранный вариант, и правильный: показать только «неверно»
+  значит не научить ничему.
+- Тесты используют `fake-indexeddb` через `src/test-setup.ts`. Подключать его внутри spec-файла
+  бесполезно: Dexie захватывает `indexedDB` в момент импорта `core/db`, то есть раньше.
+
+### PWA и установка на телефон
+
+Приложение раздаётся как PWA: на iOS это единственный путь без Mac, а офлайн-работа
+здесь и так полная — все данные лежат в IndexedDB на устройстве.
+
+```
+npm run pwa:serve     сборка + статический сервер на :4400 (service worker живёт только здесь,
+                      в ng serve его нет)
+npm run pwa:tunnel    временный HTTPS-адрес для проверки на телефоне (аккаунт не нужен)
+npm run icons         пересобрать иконки из tools/make-icons.mjs
+```
+
+- `ngsw-config.json` кладёт `/data/*.json` в **prefetch**: без этого офлайн приложение
+  осталось бы без словарей.
+- `src/index.html` — мета-теги для iOS. Safari не читает иконки и имя из манифеста, ему нужны
+  `apple-touch-icon` и `apple-mobile-web-app-title`, иначе на домашнем экране окажется скриншот
+  страницы. `viewport-fit=cover` нужен, чтобы Ionic знал про вырезы экрана.
+- `core/updates.ts` показывает полоску «Есть новая версия». Автоматически не перезагружаем:
+  выдёргивать приложение из-под рук посреди сессии нельзя. Без этого тестеры остались бы
+  навсегда на той сборке, которую поставили первой.
+- Иконки генерируются кодом (`tools/make-icons.mjs`), исходник — `public/icons/source.svg`.
+  Отдельная maskable-версия с полями нужна Android; iOS обрезает сам и требует непрозрачный фон.

@@ -1,0 +1,180 @@
+{
+  "1.1": {
+    "titleRu": "Новые соседи"
+  },
+  "1.1:al": {
+    "pos": "adv",
+    "example": {
+      "nl": "Ik woon hier al drie jaar.",
+      "ru": "Я живу здесь уже три года."
+    },
+    "tags": [
+      "al / pas"
+    ],
+    "ru": "уже"
+  },
+  "1.1:bevallen": {
+    "stress": {
+      "syllables": [
+        "be",
+        "val",
+        "len"
+      ],
+      "index": 1
+    },
+    "example": {
+      "nl": "Zij gaat in het ziekenhuis bevallen.",
+      "ru": "Она будет рожать в больнице."
+    }
+  },
+  "1.1:buren": {
+    "plural": "buren",
+    "stress": {
+      "syllables": [
+        "bu",
+        "ren"
+      ],
+      "index": 0
+    },
+    "example": {
+      "nl": "Hoe heten jouw buren?",
+      "ru": "Как зовут твоих соседей?"
+    },
+    "tags": [
+      "alleen meervoud"
+    ]
+  },
+  "1.1:geboren": {
+    "stress": {
+      "syllables": [
+        "ge",
+        "bo",
+        "ren"
+      ],
+      "index": 1
+    },
+    "example": {
+      "nl": "Ik ben in Rusland geboren.",
+      "ru": "Я родился в России."
+    }
+  },
+  "1.1:hamer": {
+    "stress": {
+      "syllables": [
+        "ha",
+        "mer"
+      ],
+      "index": 0
+    },
+    "example": {
+      "nl": "Nico maakt een tafel. Hij gebruikt een hamer.",
+      "ru": "Нико делает стол. Он использует молоток."
+    }
+  },
+  "1.1:jongste": {
+    "stress": {
+      "syllables": [
+        "jong",
+        "ste"
+      ],
+      "index": 0
+    },
+    "example": {
+      "nl": "De jongste is vijf.",
+      "ru": "Младшему пять."
+    }
+  },
+  "1.1:lenen": {
+    "stress": {
+      "syllables": [
+        "le",
+        "nen"
+      ],
+      "index": 0
+    },
+    "example": {
+      "nl": "Mag ik een pen van je lenen?",
+      "ru": "Можно одолжить у тебя ручку?"
+    }
+  },
+  "1.1:ontmoeten": {
+    "stress": {
+      "syllables": [
+        "ont",
+        "moe",
+        "ten"
+      ],
+      "index": 1
+    },
+    "example": {
+      "nl": "Waar ontmoeten we elkaar?",
+      "ru": "Где мы встретимся?"
+    }
+  },
+  "1.1:oudste": {
+    "stress": {
+      "syllables": [
+        "oud",
+        "ste"
+      ],
+      "index": 0
+    },
+    "example": {
+      "nl": "De oudste is zeven.",
+      "ru": "Старшему семь."
+    }
+  },
+  "1.1:pas": {
+    "pos": "adv",
+    "example": {
+      "nl": "Ik zit pas een week in deze klas.",
+      "ru": "Я всего неделю в этом классе."
+    },
+    "tags": [
+      "al / pas"
+    ],
+    "ru": "только что; всего лишь"
+  },
+  "1.1:succes": {
+    "article": "het",
+    "plural": "successen",
+    "pos": "noun",
+    "stress": {
+      "syllables": [
+        "suc",
+        "ces"
+      ],
+      "index": 1
+    },
+    "example": {
+      "nl": "Veel succes, Kazem!",
+      "ru": "Удачи, Казем!"
+    }
+  },
+  "1.1:voor het eerst": {
+    "example": {
+      "nl": "We hebben elkaar voor het eerst in de klas ontmoet.",
+      "ru": "Мы впервые встретились в классе."
+    }
+  },
+  "1.1:worden": {
+    "example": {
+      "nl": "Zij wordt volgende week moeder.",
+      "ru": "На следующей неделе она станет мамой."
+    }
+  },
+  "1.1:zwanger": {
+    "pos": "adj",
+    "stress": {
+      "syllables": [
+        "zwan",
+        "ger"
+      ],
+      "index": 0
+    },
+    "example": {
+      "nl": "Onze oudste dochter is zwanger.",
+      "ru": "Наша старшая дочь беременна."
+    }
+  }
+}

@@ -1,0 +1,21 @@
+.update {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem calc(0.6rem + var(--ion-safe-area-bottom, 0px));
+  background: var(--ion-color-dark);
+  color: var(--ion-color-light);
+  font-size: 0.9rem;
+}
+
+.update ion-button {
+  --color: var(--ion-color-light);
+  --text-transform: none;
+  text-transform: none;
+  font-weight: 600;
+}

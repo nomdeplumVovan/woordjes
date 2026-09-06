@@ -1,0 +1,195 @@
+/*
+ * Ionic на Material по умолчанию переводит подписи кнопок в верхний регистр.
+ * Для нидерландского это недопустимо: пропадает разница de/het, теряются
+ * заглавные в именах собственных, да и читать капслоком медленнее.
+ */
+ion-button {
+  --text-transform: none;
+  text-transform: none;
+}
+
+.layout {
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+.direction {
+  margin: 0 0 0.25rem;
+  color: var(--ion-color-medium);
+  font-size: 0.9rem;
+}
+
+.prompt {
+  margin: 0 0 1.5rem;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.options ion-button {
+  margin-bottom: 0.75rem;
+  --padding-top: 1rem;
+  --padding-bottom: 1rem;
+  white-space: normal;
+}
+
+.score {
+  padding-inline-end: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.review {
+  min-height: 8rem;
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: var(--ion-color-light);
+}
+
+.review__verdict {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.review__verdict--right {
+  color: var(--ion-color-success-shade);
+}
+
+.review__verdict--wrong {
+  color: var(--ion-color-danger-shade);
+}
+
+.review__word {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.review__meta,
+.review__example {
+  margin: 0.35rem 0 0;
+  color: var(--ion-color-medium-shade);
+  font-size: 0.95rem;
+}
+
+.review__example em {
+  color: var(--ion-color-dark);
+  font-style: normal;
+}
+
+.result {
+  padding-top: 2rem;
+  text-align: center;
+}
+
+.result__score {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.result__note {
+  margin: 0.5rem 0 2rem;
+  color: var(--ion-color-medium);
+}
+
+.review__next {
+  margin-top: 1rem;
+}
+
+.direction__nl,
+.review__verdict-nl {
+  display: block;
+}
+
+.direction__ru,
+.review__verdict-ru {
+  display: block;
+  opacity: 0.65;
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.review__rule {
+  margin: 0.6rem 0 0;
+  padding: 0.6rem 0.75rem;
+  border-left: 3px solid var(--ion-color-primary);
+  border-radius: 0 0.4rem 0.4rem 0;
+  background: var(--ion-background-color);
+}
+
+.review__rule-nl,
+.review__rule-ru,
+.review__rule-example {
+  display: block;
+}
+
+.review__rule-nl {
+  font-size: 0.95rem;
+}
+
+.review__rule-ru {
+  margin-top: 0.1rem;
+  color: var(--ion-color-medium-shade);
+  font-size: 0.85rem;
+}
+
+.review__rule-example {
+  margin-top: 0.35rem;
+  color: var(--ion-color-dark);
+  font-size: 0.85rem;
+}
+
+.review__rule {
+  position: relative;
+  padding-inline-end: 2.5rem;
+}
+
+.review__rule-info {
+  position: absolute;
+  top: -0.35rem;
+  inset-inline-end: -0.25rem;
+  --color: var(--ion-color-primary);
+  --padding-start: 0.35rem;
+  --padding-end: 0.35rem;
+  margin: 0;
+}
+
+.rule {
+  margin-bottom: 1.25rem;
+  padding-inline-start: 0.75rem;
+  border-inline-start: 3px solid var(--ion-color-primary);
+}
+
+.rule__intro {
+  margin: 0 0 1.25rem;
+  color: var(--ion-color-medium-shade);
+}
+
+.rule__heading {
+  margin: 1.75rem 0 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.rule__nl {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.rule__ru {
+  margin: 0.15rem 0 0;
+  color: var(--ion-color-medium-shade);
+  font-size: 0.9rem;
+}
+
+.rule__example {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+}
+
+.rule__verbs {
+  margin: 0.4rem 0 0;
+  color: var(--ion-color-primary);
+  font-size: 0.9rem;
+}
