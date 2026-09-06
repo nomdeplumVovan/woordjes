@@ -18,6 +18,11 @@ export const routes: Routes = [
     path: 'setup',
     loadComponent: () => import('./features/setup/setup-page').then((m) => m.SetupPage),
   },
+  // Без гарда: на новом устройстве копию могут восстановить до импорта словника.
+  {
+    path: 'backup',
+    loadComponent: () => import('./features/backup/backup-page').then((m) => m.BackupPage),
+  },
   {
     path: 'chapters',
     canActivate: [requireLibrary],

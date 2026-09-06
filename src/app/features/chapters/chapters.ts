@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import {
   IonBadge,
   IonButton,
+  IonButtons,
   IonCard,
   IonCardContent,
   IonCardHeader,
@@ -43,6 +44,7 @@ interface ThemeGroup {
     IonHeader,
     IonToolbar,
     IonTitle,
+    IonButtons,
     IonContent,
     IonList,
     IonItemGroup,
@@ -64,6 +66,9 @@ interface ThemeGroup {
     <ion-header>
       <ion-toolbar>
         <ion-title>Woordjes</ion-title>
+        <ion-buttons slot="end">
+          <ion-button routerLink="/backup">Back-up</ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 

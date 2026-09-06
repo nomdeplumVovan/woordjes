@@ -1,0 +1,51 @@
+.layout {
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+.intro {
+  margin: 0 0 1rem;
+  color: var(--ion-color-medium-shade);
+  line-height: 1.5;
+}
+
+/* Системный диалог открываем кнопкой Ionic, а сам input прячем. */
+.picker {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Русская подпись под нидерландской кнопкой: те же слова примелькаются. */
+.hint {
+  margin: 0.35rem 0 1.25rem;
+  color: var(--ion-color-medium);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.error {
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--ion-color-danger-tint);
+  color: var(--ion-color-danger-shade);
+}
+
+.done {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: var(--ion-color-success-tint);
+}
+
+.done p {
+  margin: 0;
+}
+
+ion-button {
+  --text-transform: none;
+  text-transform: none;
+}
