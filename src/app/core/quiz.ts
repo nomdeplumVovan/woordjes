@@ -80,7 +80,10 @@ export class Quiz {
    */
   async forToday(size = 10): Promise<Question[]> {
     const context = await this.context();
-    const progress = new Map((await db.progress.toArray()).map((p) => [p.wordId, p]));
+    // Только перевод: записи артикля и форм глагола лежат в той же таблице,
+    // и по общему ключу wordId они затирали друг друга — слово, у которого
+    // тренировали лишь артикль, переставало считаться новым для перевода.
+    const progress = await this.srs.byWord('translation');
     const now = Date.now();
 
     const due = context.pool

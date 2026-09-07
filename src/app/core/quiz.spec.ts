@@ -154,6 +154,26 @@ describe('Quiz', () => {
       expect(chapters.every((id) => id === '1.1')).toBe(true);
     });
 
+    it('не считает слово виденным из-за прогресса по другому навыку', async () => {
+      const now = Date.now();
+      // Артикль тренировали, перевод — ни разу. Записи лежат в одной таблице,
+      // и по общему ключу wordId прогресс артикля выдавал бы себя за перевод.
+      await db.progress.put({
+        wordId: '1.1:a',
+        skill: 'article',
+        box: 4,
+        dueAt: now + 8 * DAY_MS,
+        correct: 4,
+        wrong: 0,
+        lastSeenAt: now,
+      });
+
+      const ids = (await quiz.forToday(10)).map((q) => q.word.id);
+
+      // Слово новое для перевода: срок артикля к нему отношения не имеет.
+      expect(ids).toContain('1.1:a');
+    });
+
     it('не показывает слово, у которого срок ещё не наступил, даже если новых нет', async () => {
       const now = Date.now();
       const all = await db.words.toArray();
