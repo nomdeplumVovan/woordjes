@@ -34,7 +34,12 @@ export class BadBackupError extends Error {
  * Полный перечень навыков. Записан объектом, а не массивом: добавится
  * четвёртый навык — TypeScript потребует дописать его и сюда.
  */
-const SKILLS: Record<Skill, true> = { translation: true, article: true, verb: true };
+const SKILLS: Record<Skill, true> = {
+  translation: true,
+  recall: true,
+  article: true,
+  verb: true,
+};
 
 function isProgress(value: unknown): value is Progress {
   if (typeof value !== 'object' || value === null) return false;

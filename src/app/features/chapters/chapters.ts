@@ -101,6 +101,26 @@ interface ThemeGroup {
 
           <ion-card class="today">
             <ion-card-header>
+              <ion-card-title>Onthouden</ion-card-title>
+              <p class="today__subtitle">Вспомнить слово</p>
+            </ion-card-header>
+            <ion-card-content>
+              <p class="today__line">
+                @if (counts(); as c) {
+                  @if (c.recallDue) {
+                    К повторению: <strong>{{ c.recallDue }}</strong>
+                  } @else {
+                    Повторять пока нечего
+                  }
+                  · новых: {{ c.recallFresh }} · выучено: {{ c.recallLearned }}
+                }
+              </p>
+              <ion-button expand="block" fill="outline" routerLink="/recall">Oefenen</ion-button>
+            </ion-card-content>
+          </ion-card>
+
+          <ion-card class="today">
+            <ion-card-header>
               <ion-card-title>de of het</ion-card-title>
               <p class="today__subtitle">Артикли</p>
             </ion-card-header>

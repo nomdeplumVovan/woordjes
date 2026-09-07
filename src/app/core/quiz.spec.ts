@@ -3,6 +3,8 @@ import { db } from './db';
 import { Quiz } from './quiz';
 import type { Chapter, Word } from './models';
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 function word(id: string, chapterId: string, nl: string, ru: string, extra: Partial<Word> = {}): Word {
   return { id, chapterId, nl, ru, pos: 'noun', ...extra };
 }
@@ -122,7 +124,6 @@ describe('Quiz', () => {
   });
 
   describe('сессия на сегодня', () => {
-    const DAY_MS = 24 * 60 * 60 * 1000;
 
     it('сначала берёт слова с подошедшим сроком', async () => {
       const now = Date.now();
@@ -152,6 +153,14 @@ describe('Quiz', () => {
       const chapters = questions.map((q) => q.word.chapterId);
       // Первый параграф содержит пять слов к изучению — до 1.2 и 5.1 дело не доходит.
       expect(chapters.every((id) => id === '1.1')).toBe(true);
+    });
+
+    it('спрашивает только узнавание: нидерландское слово, русские варианты', async () => {
+      const questions = await quiz.forToday(5);
+
+      expect(questions).not.toHaveLength(0);
+      expect(questions.every((q) => q.direction === 'nl-ru')).toBe(true);
+      expect(questions.every((q) => q.skill === 'translation')).toBe(true);
     });
 
     it('не считает слово виденным из-за прогресса по другому навыку', async () => {
@@ -208,6 +217,60 @@ describe('Quiz', () => {
     });
   });
 
+
+  describe('активное припоминание', () => {
+    it('спрашивает русское слово, а варианты даёт нидерландские', async () => {
+      const questions = await quiz.forRecall(5);
+
+      expect(questions).not.toHaveLength(0);
+      expect(questions.every((q) => q.direction === 'ru-nl')).toBe(true);
+      expect(questions.every((q) => q.skill === 'recall')).toBe(true);
+      // Спрашивается перевод, отвечать надо нидерландским словом.
+      const first = questions[0];
+      expect(first.prompt).toBe(first.word.ru);
+      expect(first.options).toContain(first.word.nl);
+    });
+
+    it('идёт по своим срокам, не по срокам узнавания', async () => {
+      const now = Date.now();
+      // Узнавание отработано и отложено далеко; припоминания не было ни разу.
+      const all = await db.words.toArray();
+      await db.progress.bulkPut(
+        all.map((w) => ({
+          wordId: w.id,
+          skill: 'translation' as const,
+          box: 5,
+          dueAt: now + 16 * DAY_MS,
+          correct: 5,
+          wrong: 0,
+          lastSeenAt: now,
+        })),
+      );
+
+      // Узнавать нечего — всё отложено.
+      expect(await quiz.forToday(10)).toEqual([]);
+      // А вспоминать эти слова ещё не пробовали: они все новые.
+      expect((await quiz.forRecall(10)).length).toBeGreaterThan(0);
+    });
+
+    it('не выдаёт слово, у которого срок припоминания не подошёл', async () => {
+      const now = Date.now();
+      const all = await db.words.toArray();
+      await db.progress.bulkPut(
+        all.map((w) => ({
+          wordId: w.id,
+          skill: 'recall' as const,
+          box: 3,
+          dueAt: now + 4 * DAY_MS,
+          correct: 3,
+          wrong: 0,
+          lastSeenAt: now,
+        })),
+      );
+
+      expect(await quiz.forRecall(10)).toEqual([]);
+    });
+  });
 
   describe('режим de/het', () => {
     beforeEach(async () => {

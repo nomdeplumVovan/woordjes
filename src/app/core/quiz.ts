@@ -2,7 +2,7 @@ import { Service, inject } from '@angular/core';
 import { db } from './db';
 import { LEARNED_BOX, Srs, hasArticle, isLearnable } from './srs';
 import { isIrregularVerb, perfectOf, regularParticiple, regularPast } from './verbs';
-import type { Chapter, Skill, Word } from './models';
+import type { Chapter, Progress, Skill, Word } from './models';
 
 /** Сколько вариантов показываем: правильный плюс три отвлекающих. */
 const OPTIONS = 4;
@@ -14,6 +14,11 @@ const OPTIONS = 4;
 const STOP_WORDS = new Set(['что', 'как', 'это', 'или', 'для', 'при', 'над', 'под', 'без', 'the']);
 
 export type Direction = 'nl-ru' | 'ru-nl';
+
+/** Направление наугад: в тренировке параграфа полезна смесь узнавания и припоминания. */
+function coinFlip(): Direction {
+  return Math.random() < 0.5 ? 'nl-ru' : 'ru-nl';
+}
 
 export interface Question {
   word: Word;
@@ -64,6 +69,33 @@ export class Quiz {
   private readonly srs = inject(Srs);
 
   /** Вопросы по одному параграфу. */
+  /**
+   * Отбор для любого навыка: сперва просроченные, в порядке наступления срока,
+   * потом новые — они уже разложены по порядку параграфов, чтобы учебник
+   * проходился последовательно. Слово с ненаступившим сроком не берётся даже
+   * тогда, когда новых не осталось: иначе интервальное повторение теряет смысл.
+   */
+  private dueThenFresh(
+    pool: Word[],
+    progress: Map<string, Progress>,
+    size: number,
+    now = Date.now(),
+  ): Word[] {
+    const due = pool
+      .filter((word) => {
+        const seen = progress.get(word.id);
+        return seen !== undefined && seen.dueAt <= now;
+      })
+      .sort((a, b) => progress.get(a.id)!.dueAt - progress.get(b.id)!.dueAt);
+
+    const selected = due.slice(0, size);
+    if (selected.length < size) {
+      const fresh = pool.filter((word) => !progress.has(word.id));
+      selected.push(...fresh.slice(0, size - selected.length));
+    }
+    return selected;
+  }
+
   async forChapter(chapterId: string, size = 10): Promise<Question[]> {
     const context = await this.context();
     if (!context.themeOf.has(chapterId)) return [];
@@ -71,7 +103,7 @@ export class Quiz {
     const words = context.pool.filter((w) => w.chapterId === chapterId);
     return shuffle(words)
       .slice(0, size)
-      .map((word) => this.buildQuestion(word, context));
+      .map((word) => this.buildQuestion(word, context, coinFlip()));
   }
 
   /**
@@ -80,27 +112,23 @@ export class Quiz {
    */
   async forToday(size = 10): Promise<Question[]> {
     const context = await this.context();
-    // Только перевод: записи артикля и форм глагола лежат в той же таблице,
-    // и по общему ключу wordId они затирали друг друга — слово, у которого
-    // тренировали лишь артикль, переставало считаться новым для перевода.
     const progress = await this.srs.byWord('translation');
-    const now = Date.now();
+    const selected = this.dueThenFresh(context.pool, progress, size);
 
-    const due = context.pool
-      .filter((word) => {
-        const seen = progress.get(word.id);
-        return seen && seen.dueAt <= now;
-      })
-      .sort((a, b) => progress.get(a.id)!.dueAt - progress.get(b.id)!.dueAt);
+    return shuffle(selected).map((word) => this.buildQuestion(word, context, 'nl-ru'));
+  }
 
-    const selected = due.slice(0, size);
+  /**
+   * Активное припоминание: русское слово, четыре нидерландских варианта.
+   * Держится отдельно от узнавания, потому что забывается быстрее — слово,
+   * которое уверенно узнаёшь в тексте, в речи вспоминается далеко не всегда.
+   */
+  async forRecall(size = 10): Promise<Question[]> {
+    const context = await this.context();
+    const progress = await this.srs.byWord('recall');
+    const selected = this.dueThenFresh(context.pool, progress, size);
 
-    if (selected.length < size) {
-      const fresh = context.pool.filter((word) => !progress.has(word.id));
-      selected.push(...fresh.slice(0, size - selected.length));
-    }
-
-    return shuffle(selected).map((word) => this.buildQuestion(word, context));
+    return shuffle(selected).map((word) => this.buildQuestion(word, context, 'ru-nl'));
   }
 
   /**
@@ -110,22 +138,8 @@ export class Quiz {
   async forArticles(size = 10): Promise<Question[]> {
     const context = await this.context();
     const progress = await this.srs.byWord('article');
-    const now = Date.now();
-
     const nouns = context.pool.filter(hasArticle);
-
-    const due = nouns
-      .filter((word) => {
-        const seen = progress.get(word.id);
-        return seen && seen.dueAt <= now;
-      })
-      .sort((a, b) => progress.get(a.id)!.dueAt - progress.get(b.id)!.dueAt);
-
-    const selected = due.slice(0, size);
-    if (selected.length < size) {
-      const fresh = nouns.filter((word) => !progress.has(word.id));
-      selected.push(...fresh.slice(0, size - selected.length));
-    }
+    const selected = this.dueThenFresh(nouns, progress, size);
 
     return shuffle(selected).map((word) => this.buildArticleQuestion(word));
   }
@@ -152,22 +166,8 @@ export class Quiz {
   async forVerbs(size = 10): Promise<Question[]> {
     const context = await this.context();
     const progress = await this.srs.byWord('verb');
-    const now = Date.now();
-
     const verbs = context.pool.filter(isIrregularVerb);
-
-    const due = verbs
-      .filter((word) => {
-        const seen = progress.get(word.id);
-        return seen && seen.dueAt <= now;
-      })
-      .sort((a, b) => progress.get(a.id)!.dueAt - progress.get(b.id)!.dueAt);
-
-    const selected = due.slice(0, size);
-    if (selected.length < size) {
-      const fresh = verbs.filter((word) => !progress.has(word.id));
-      selected.push(...fresh.slice(0, size - selected.length));
-    }
+    const selected = this.dueThenFresh(verbs, progress, size);
 
     return shuffle(selected)
       .map((word) => this.buildVerbQuestion(word, verbs))
@@ -259,13 +259,17 @@ export class Quiz {
     articlesDue: number;
     articlesFresh: number;
     articlesLearned: number;
+    recallDue: number;
+    recallFresh: number;
+    recallLearned: number;
     verbsDue: number;
     verbsFresh: number;
     verbsLearned: number;
   }> {
-    const [words, translation, article, verb] = await Promise.all([
+    const [words, translation, recall, article, verb] = await Promise.all([
       db.words.toArray(),
       this.srs.byWord('translation'),
+      this.srs.byWord('recall'),
       this.srs.byWord('article'),
       this.srs.byWord('verb'),
     ]);
@@ -287,11 +291,15 @@ export class Quiz {
     };
 
     const words_ = tally(learnable, translation);
+    const recalls = tally(learnable, recall);
     const articles = tally(learnable.filter(hasArticle), article);
     const verbs = tally(learnable.filter(isIrregularVerb), verb);
 
     return {
       ...words_,
+      recallDue: recalls.due,
+      recallFresh: recalls.fresh,
+      recallLearned: recalls.learned,
       articlesDue: articles.due,
       articlesFresh: articles.fresh,
       articlesLearned: articles.learned,
@@ -326,10 +334,7 @@ export class Quiz {
     return db.chapters.orderBy('order').toArray();
   }
 
-  private buildQuestion(word: Word, context: Context): Question {
-    // Половина вопросов в обратную сторону: узнавать перевод легче, чем
-    // вспоминать само слово, и без обратного направления слова не активируются.
-    const direction: Direction = Math.random() < 0.5 ? 'nl-ru' : 'ru-nl';
+  private buildQuestion(word: Word, context: Context, direction: Direction): Question {
     const answerOf = (w: Word) => (direction === 'nl-ru' ? w.ru : w.nl);
 
     const correct = answerOf(word);
@@ -338,7 +343,7 @@ export class Quiz {
 
     return {
       word,
-      skill: 'translation',
+      skill: direction === 'nl-ru' ? 'translation' : 'recall',
       prompt: direction === 'nl-ru' ? this.withArticle(word) : word.ru,
       options,
       correctIndex: options.indexOf(correct),

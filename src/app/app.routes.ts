@@ -30,6 +30,7 @@ export const routes: Routes = [
   },
   // Повторение, артикли и глаголы — один экран, разные источники слов.
   { path: 'review', canActivate: [requireLibrary], loadComponent: quizPage },
+  { path: 'recall', canActivate: [requireLibrary], loadComponent: quizPage },
   { path: 'articles', canActivate: [requireLibrary], loadComponent: quizPage },
   { path: 'verbs', canActivate: [requireLibrary], loadComponent: quizPage },
   { path: 'quiz/:chapterId', canActivate: [requireLibrary], loadComponent: quizPage },

@@ -244,6 +244,8 @@ export class QuizPage {
   private readonly articlesMode = this.route.snapshot.url.some((s) => s.path === 'articles');
   /** Режим форм неправильных глаголов. */
   private readonly verbsMode = this.route.snapshot.url.some((s) => s.path === 'verbs');
+  /** Активное припоминание: русское слово, варианты на нидерландском. */
+  private readonly recallMode = this.route.snapshot.url.some((s) => s.path === 'recall');
 
   protected readonly questions = signal<Question[]>([]);
   protected readonly index = signal(0);
@@ -264,6 +266,7 @@ export class QuizPage {
   protected readonly title = computed(() => {
     if (this.articlesMode) return 'de of het';
     if (this.verbsMode) return 'Werkwoorden';
+    if (this.recallMode) return 'Onthouden';
     return this.chapterId ? `Параграф ${this.chapterId}` : 'Herhalen';
   });
 
@@ -434,6 +437,7 @@ export class QuizPage {
   private collect(): Promise<Question[]> {
     if (this.articlesMode) return this.quiz.forArticles(SESSION_SIZE);
     if (this.verbsMode) return this.quiz.forVerbs(SESSION_SIZE);
+    if (this.recallMode) return this.quiz.forRecall(SESSION_SIZE);
     if (this.chapterId) return this.quiz.forChapter(this.chapterId, SESSION_SIZE);
     return this.quiz.forToday(SESSION_SIZE);
   }
