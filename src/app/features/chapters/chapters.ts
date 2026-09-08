@@ -201,8 +201,9 @@ interface ThemeGroup {
               </ion-item-group>
             } @empty {
               <p class="ion-padding">
-                Словари пусты. Добавь параграф в <code>public/data</code> и впиши его в
-                <code>index.json</code>.
+                Словарь пуст. Загрузи <strong>Woordenlijst</strong> из личного кабинета
+                <a href="https://leren.kleurrijker.nl">leren.kleurrijker.nl</a> на экране
+                <a routerLink="/setup">импорта</a>.
               </p>
             }
           </ion-list>

@@ -78,22 +78,6 @@ export interface Chapter {
 /** Слово в JSON-файле параграфа: без id и chapterId — они выводятся при импорте. */
 export type WordSource = Omit<Word, 'id' | 'chapterId'>;
 
-/** Формат файла public/data/<id>.json */
-export interface ChapterSource {
-  id: string;
-  title: string;
-  titleRu: string;
-  theme: number;
-  themeTitle: string;
-  level: string;
-  order: number;
-  words: WordSource[];
-}
-
-/**
- * Что именно тренируется. Навыки независимы: знать перевод «buren» и помнить,
- * что это «de buren», — разные умения, и забываются они врозь.
- */
 /**
  * Навыки тренируются и забываются врозь, поэтому у каждого своя коробка.
  * `translation` — узнать слово (nl→ru), `recall` — вспомнить его (ru→nl):

@@ -112,7 +112,10 @@ const VERDICTS = {
           <p class="prompt">{{ question.prompt }}</p>
 
           <div class="options">
-            @for (option of question.options; track option; let i = $index) {
+            <!-- Отслеживаем по позиции, а не по тексту: варианты — четыре
+                 фиксированных слота, и одинаковый перевод в двух из них уронил
+                 бы рендер дублирующимся ключом. -->
+            @for (option of question.options; track $index; let i = $index) {
               <ion-button
                 expand="block"
                 size="large"
