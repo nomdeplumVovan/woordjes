@@ -17,6 +17,7 @@ import {
   IonToolbar,
 } from '@ionic/angular';
 import type { CheckboxCustomEvent } from '@ionic/core';
+import type { Example } from '../../core/models';
 import { Quiz, type Direction, type Question } from '../../core/quiz';
 import { Settings } from '../../core/settings';
 import { Speech } from '../../core/speech';
@@ -190,6 +191,17 @@ const VERDICTS = {
               @if (question.word.example; as example) {
                 <p class="review__example">
                   <em>{{ example.nl }}</em> — {{ example.ru }}
+                  @if (speech.available()) {
+                    <ion-button
+                      class="review__listen"
+                      fill="clear"
+                      size="small"
+                      [attr.aria-label]="'Произнести пример: ' + example.nl"
+                      (click)="pronounceExample(example)"
+                    >
+                      <ion-icon slot="icon-only" name="volume-high-outline" />
+                    </ion-button>
+                  }
                 </p>
               }
               <ion-button class="review__next" expand="block" (click)="next()">
@@ -342,6 +354,14 @@ export class QuizPage {
 
   protected toggleSpeakOnAnswer(event: CheckboxCustomEvent): void {
     this.settings.setSpeakOnAnswer(event.detail.checked);
+  }
+
+  /**
+   * Пример читается по-нидерландски: русский перевод синтезатору не отдаём —
+   * нидерландский голос прочёл бы его как набор букв.
+   */
+  protected pronounceExample(example: Example): void {
+    this.speech.speak(example.nl);
   }
 
   protected pronounce(question: Question): void {
