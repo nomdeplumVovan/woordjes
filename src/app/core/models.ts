@@ -68,6 +68,10 @@ export interface Chapter {
   themeTitle: string;
   level: string;
   order: number;
+  /**
+   * Сколько в параграфе слов для тренировки. Грамматические термины
+   * («niet leren») не считаются, поэтому у грамматических параграфов здесь 0.
+   */
   wordCount: number;
 }
 

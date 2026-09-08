@@ -7,8 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "pwa:serve": "ng build && http-server dist/woordjes/browser -p 4400 -c-1",
-    "pwa:tunnel": "cloudflared tunnel --url http://localhost:4400",
+    "pwa:serve": "ng build && http-server dist/woordjes/browser -p 4500 -c-1",
+    "pwa:tunnel": "cloudflared tunnel --url http://localhost:4500",
     "icons": "node tools/make-icons.mjs"
   },
   "private": true,

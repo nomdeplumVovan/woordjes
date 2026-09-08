@@ -1,0 +1,58 @@
+/* Экран читается и на телефоне, и на широком мониторе. */
+.layout {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.head {
+  margin-bottom: 1rem;
+}
+
+.head__nl {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.head__ru {
+  margin: 0.25rem 0 0;
+  color: var(--ion-color-medium);
+  font-size: 0.9rem;
+}
+
+/* Двуязычная подпись: нидерландский крупно, русский подсказкой мелким. */
+.intro {
+  margin: 0 0 1rem;
+  color: var(--ion-color-medium-shade);
+  font-size: 0.9rem;
+}
+
+.intro__nl,
+.intro__ru {
+  display: block;
+}
+
+.intro__nl {
+  color: var(--ion-color-dark);
+}
+
+.intro__ru {
+  margin-top: 0.2rem;
+  font-size: 0.85rem;
+}
+
+ion-button {
+  --text-transform: none;
+  text-transform: none;
+}
+
+.back {
+  margin-top: 1rem;
+}
+
+/* Динамик — вспомогательное действие: серый, чтобы не спорить с термином. */
+.listen {
+  --color: var(--ion-color-medium);
+  margin: 0;
+}

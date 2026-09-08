@@ -105,6 +105,10 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 4400,
+            "host": "127.0.0.1"
+          },
           "configurations": {
             "production": {
               "buildTarget": "woordjes:build:production"

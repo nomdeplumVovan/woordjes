@@ -6,6 +6,7 @@ import {
   IonBackButton,
   IonButton,
   IonButtons,
+  IonCheckbox,
   IonContent,
   IonHeader,
   IonIcon,
@@ -15,7 +16,9 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/angular';
+import type { CheckboxCustomEvent } from '@ionic/core';
 import { Quiz, type Direction, type Question } from '../../core/quiz';
+import { Settings } from '../../core/settings';
 import { Speech } from '../../core/speech';
 import { Srs } from '../../core/srs';
 import {
@@ -65,6 +68,7 @@ const VERDICTS = {
     IonBackButton,
     IonContent,
     IonButton,
+    IonCheckbox,
     IonNote,
     IonProgressBar,
     IonIcon,
@@ -128,8 +132,23 @@ const VERDICTS = {
                 [class.review__verdict--right]="chosen() === question.correctIndex"
                 [class.review__verdict--wrong]="chosen() !== question.correctIndex"
               >
-                <span class="review__verdict-nl">{{ verdictLabel(question).nl }}</span>
-                <span class="review__verdict-ru">{{ verdictLabel(question).ru }}</span>
+                <span class="review__verdict-text">
+                  <span class="review__verdict-nl">{{ verdictLabel(question).nl }}</span>
+                  <span class="review__verdict-ru">{{ verdictLabel(question).ru }}</span>
+                </span>
+                <!-- Галки нет, когда нидерландского голоса в системе нет: настраивать
+                     было бы нечего. Выключена по умолчанию — сама не заговорит. -->
+                @if (speech.available()) {
+                  <ion-checkbox
+                    class="review__auto"
+                    labelPlacement="start"
+                    [checked]="settings.speakOnAnswer()"
+                    (ionChange)="toggleSpeakOnAnswer($event)"
+                  >
+                    <span class="review__auto-nl">Voorlezen</span>
+                    <span class="review__auto-ru">Озвучивать сразу</span>
+                  </ion-checkbox>
+                }
               </p>
               <p class="review__word">
                 {{ full(question) }} — {{ question.word.ru }}
@@ -237,6 +256,7 @@ export class QuizPage {
   private readonly srs = inject(Srs);
   // Шаблон спрашивает available(), поэтому сервис доступен ему напрямую.
   protected readonly speech = inject(Speech);
+  protected readonly settings = inject(Settings);
 
   /** Пусто — значит режим не привязан к параграфу. */
   private readonly chapterId = this.route.snapshot.paramMap.get('chapterId') ?? '';
@@ -320,6 +340,10 @@ export class QuizPage {
     return word.article ? `${word.article} ${word.nl}` : word.nl;
   }
 
+  protected toggleSpeakOnAnswer(event: CheckboxCustomEvent): void {
+    this.settings.setSpeakOnAnswer(event.detail.checked);
+  }
+
   protected pronounce(question: Question): void {
     this.speech.speak(this.spoken(question));
   }
@@ -378,6 +402,10 @@ export class QuizPage {
     const isCorrect = option === question.correctIndex;
     if (isCorrect) this.correct.update((n) => n + 1);
 
+    // Озвучка при показе ответа — только если её включили галкой: по умолчанию
+    // слово звучит по кнопке, чтобы приложение не заговорило в тихом месте.
+    if (this.settings.speakOnAnswer() && this.speech.available()) this.pronounce(question);
+
     await this.srs.answer(question.word.id, question.skill, isCorrect);
 
     // Автоперехода нет намеренно: разбор показывается до тех пор, пока
@@ -387,6 +415,10 @@ export class QuizPage {
   /** 1..4 — выбор варианта, Enter или пробел — переход дальше. */
   protected onKey(event: KeyboardEvent): void {
     if (this.loading() || this.finished()) return;
+
+    // Пробел на галке — её переключение, а не «дальше»: иначе одно нажатие
+    // и меняло бы настройку, и уводило на следующий вопрос.
+    if ((event.target as HTMLElement | null)?.closest('ion-checkbox')) return;
 
     if (this.chosen() === null) {
       const option = OPTION_KEYS.indexOf(event.key);

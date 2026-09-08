@@ -34,4 +34,10 @@ export const routes: Routes = [
   { path: 'articles', canActivate: [requireLibrary], loadComponent: quizPage },
   { path: 'verbs', canActivate: [requireLibrary], loadComponent: quizPage },
   { path: 'quiz/:chapterId', canActivate: [requireLibrary], loadComponent: quizPage },
+  // Грамматический параграф: тренировать нечего, термины отдаются на чтение.
+  {
+    path: 'terms/:chapterId',
+    canActivate: [requireLibrary],
+    loadComponent: () => import('./features/terms/terms-page').then((m) => m.TermsPage),
+  },
 ];

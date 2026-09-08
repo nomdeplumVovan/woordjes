@@ -4,6 +4,7 @@ import type { ReadProgress } from './import/pdf';
 import type { IrregularVerb } from './import/verb-list';
 import type { Page } from './import/woordenlijst';
 import type { Chapter, Word, WordSource } from './models';
+import { isLearnable } from './srs';
 
 /** Ручные дополнения: примеры и ударения, которых нет в словнике издателя. */
 type Overrides = Record<string, Partial<Word> & { titleRu?: string }>;
@@ -75,6 +76,11 @@ export class Library {
       const chapterPatch = overrides[source.id];
       const titleRu = chapterPatch?.titleRu ?? source.titleRu;
 
+      const chapterWords = source.words.map((item) =>
+        this.buildWord(item, source.id, overrides, verbs),
+      );
+      words.push(...chapterWords);
+
       chapters.push({
         id: source.id,
         title: source.title,
@@ -83,12 +89,11 @@ export class Library {
         themeTitle: source.themeTitle,
         level: source.level,
         order: source.order,
-        wordCount: source.words.length,
+        // Грамматические термины в счёт не идут: у почти половины параграфов
+        // учебника других слов и нет, а «0 / 8» в списке обещало бы тренировку,
+        // которой там не будет.
+        wordCount: chapterWords.filter(isLearnable).length,
       });
-
-      for (const item of source.words) {
-        words.push(this.buildWord(item, source.id, overrides, verbs));
-      }
     }
 
     await db.transaction('rw', db.chapters, db.words, async () => {

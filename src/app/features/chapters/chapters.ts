@@ -21,13 +21,15 @@ import {
 } from '@ionic/angular';
 import { RouterLink } from '@angular/router';
 import { Quiz } from '../../core/quiz';
-import { LEARNED_BOX, Srs } from '../../core/srs';
+import { LEARNED_BOX, Srs, isLearnable } from '../../core/srs';
 import { db } from '../../core/db';
 import type { Chapter } from '../../core/models';
 
 interface ChapterView extends Chapter {
   learned: number;
   ratio: number;
+  /** Грамматических терминов: не тренируются, но их стоит прочесть. */
+  terms: number;
 }
 
 interface ThemeGroup {
@@ -168,20 +170,33 @@ interface ThemeGroup {
                 </ion-item-divider>
 
                 @for (chapter of group.chapters; track chapter.id) {
-                  <ion-item button [detail]="true" [routerLink]="['/quiz', chapter.id]">
-                    <ion-badge slot="start">{{ chapter.id }}</ion-badge>
-                    <ion-label>
-                      <h2>{{ chapter.title }}</h2>
-                      <p>{{ chapter.titleRu }}</p>
-                      <ion-progress-bar
-                        [value]="chapter.ratio"
-                        [attr.aria-label]="
-                          'Выучено ' + chapter.learned + ' из ' + chapter.wordCount
-                        "
-                      />
-                    </ion-label>
-                    <ion-note slot="end">{{ chapter.learned }} / {{ chapter.wordCount }}</ion-note>
-                  </ion-item>
+                  @if (chapter.wordCount) {
+                    <ion-item button [detail]="true" [routerLink]="['/quiz', chapter.id]">
+                      <ion-badge slot="start">{{ chapter.id }}</ion-badge>
+                      <ion-label>
+                        <h2>{{ chapter.title }}</h2>
+                        <p>{{ chapter.titleRu }}</p>
+                        <ion-progress-bar
+                          [value]="chapter.ratio"
+                          [attr.aria-label]="
+                            'Выучено ' + chapter.learned + ' из ' + chapter.wordCount
+                          "
+                        />
+                      </ion-label>
+                      <ion-note slot="end">{{ chapter.learned }} / {{ chapter.wordCount }}</ion-note>
+                    </ion-item>
+                  } @else {
+                    <!-- Грамматический параграф: тренировать нечего, но термины
+                         учебника стоит узнавать — ведём в список на чтение. -->
+                    <ion-item button [detail]="true" [routerLink]="['/terms', chapter.id]">
+                      <ion-badge slot="start" color="medium">{{ chapter.id }}</ion-badge>
+                      <ion-label>
+                        <h2>{{ chapter.title }}</h2>
+                        <p>{{ chapter.terms }} termen · термины, не для заучивания</p>
+                      </ion-label>
+                      <ion-note slot="end">grammatica</ion-note>
+                    </ion-item>
+                  }
                 }
               </ion-item-group>
             } @empty {
@@ -252,9 +267,19 @@ export class Chapters {
 
     return Promise.all(
       chapters.map(async (chapter) => {
-        const ids = await db.words.where('chapterId').equals(chapter.id).primaryKeys();
-        const learned = ids.filter((id) => learnedIds.has(id)).length;
-        return { ...chapter, learned, ratio: chapter.wordCount ? learned / chapter.wordCount : 0 };
+        const words = await db.words.where('chapterId').equals(chapter.id).toArray();
+        // Считаем по словам, а не по chapter.wordCount: у тех, кто импортировал
+        // словник до этой версии, в базе лежит старое число вместе с терминами.
+        const learnable = words.filter(isLearnable);
+        const learned = learnable.filter((word) => learnedIds.has(word.id)).length;
+
+        return {
+          ...chapter,
+          wordCount: learnable.length,
+          terms: words.length - learnable.length,
+          learned,
+          ratio: learnable.length ? learned / learnable.length : 0,
+        };
       }),
     );
   }

@@ -47,8 +47,39 @@ ion-button {
 }
 
 .review__verdict {
+  display: flex;
+  /* На узком экране и при увеличенном системном шрифте галка уходит на свою
+     строку, а не сдавливает вердикт. */
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem;
   margin: 0 0 0.5rem;
   font-weight: 600;
+}
+
+/* Галка прижата к правому краю строки и не окрашивается вердиктом:
+   зелёный «Goed!» не должен красить настройку. */
+.review__auto {
+  --checkbox-background-checked: var(--ion-color-medium);
+  --border-color-checked: var(--ion-color-medium);
+  /* Прижата вправо через auto, а не space-between: тогда она держится правого
+     края и когда переносится на отдельную строку. */
+  flex: none;
+  margin-left: auto;
+  color: var(--ion-color-medium-shade);
+  font-size: 0.75rem;
+  font-weight: 400;
+  text-align: end;
+}
+
+.review__auto-nl {
+  display: block;
+}
+
+.review__auto-ru {
+  display: block;
+  opacity: 0.75;
+  font-size: 0.7rem;
 }
 
 .review__verdict--right {
